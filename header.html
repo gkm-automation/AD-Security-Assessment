@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link rel='shortcut icon' href='favicon.png' type='image/x-icon'>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title>AD Security Check</title>
+  <script type="" text/javascript"">
+        function Powershellparamater(htmlTable)
+        {
+  
+         var myWindow = window.open('', '_blank');
+         myWindow.document.write(htmlTable);
+        }
+        window.onscroll = function (){
+  
+  
+         if (window.pageYOffset == 0) {
+          document.getElementById(""toolbar"").style.display = ""none"";
+         }
+         else {
+          if (window.pageYOffset > 150) {
+             document.getElementById(""toolbar"").style.display = ""block"";
+          }
+         }
+        }
+  
+        function HideTopButton() {
+         document.getElementById(""toolbar"").style.display = ""none"";
+        }
+      </script>
+  <style>
+    <style>#toolbar {
+      position: fixed;
+      width: 100%;
+      height: 25px;
+      top: 0;
+      left: 0;
+      /**/
+      text-align: right;
+      display: none;
+    }
+
+    #backToTop {
+      font-family: Segoe UI;
+      font-weight: bold;
+      font-size: 20px;
+      color: #9A2701;
+      background-color: #ffffff;
+    }
+
+    #Reportrer {
+      width: 95%;
+      margin: 0 auto;
+    }
+
+    body {
+      color: #333333;
+      font-family: Calibri, Tahoma;
+      font-size: 10pt;
+      background-color: #616060;
+    }
+
+    .odd {
+      background-color: #ffffff;
+    }
+
+    .even {
+      background-color: #dddddd;
+    }
+
+    table {
+      background-color: #616060;
+      width: 100%;
+      color: #fff;
+      margin: auto;
+      border: 1px groove #000000;
+      border-collapse: collapse;
+    }
+
+    caption {
+      background-color: #D9D7D7;
+      color: #000000;
+    }
+
+    .bold_class {
+      background-color: #ffffff;
+      color: #000000;
+      font-weight: 550;
+    }
+
+    td {
+      text-align: left;
+      font-size: 14px;
+      color: #000000;
+      background-color: #F5F5F5;
+      border: 1px groove #000000;
+
+      -webkit-box-shadow: 0px 10px 10px -10px #979696;
+      -moz-box-shadow: 0px 10px 10px -10px #979696;
+      box-shadow: 0px 2px 2px 2px #979696;
+    }
+
+    td a {
+      text-decoration: none;
+      color: blue;
+      word-wrap: Break-word;
+    }
+
+    th {
+      background-color: #7D7D7D;
+      text-align: center;
+      font-size: 14px;
+      border: 1px groove #000000;
+      word-wrap: Break-word;
+
+      -webkit-box-shadow: 0px 10px 10px -10px #979696;
+      -moz-box-shadow: 0px 10px 10px -10px #979696;
+      box-shadow: 0px 2px 2px 2px #979696;
+    }
+
+
+
+    #container {
+      width: 98%;
+      background-color: #616060;
+      margin: 0px auto;
+      overflow-x: auto;
+      margin-bottom: 20px;
+    }
+
+    #scriptexecutioncontainer {
+      width: 80%;
+      background-color: #616060;
+      overflow-x: auto;
+      margin-bottom: 30px;
+      margin: auto;
+    }
+
+    #discovercontainer {
+      width: 80%;
+      background-color: #616060;
+      overflow-x: auto;
+      padding-top: 30px;
+      margin-bottom: 30px;
+      margin: auto;
+    }
+
+    #portsubcontainer {
+      float: left;
+      width: 48%;
+      height: 250px;
+      overflow-x: auto;
+      overflow-y: auto;
+    }
+
+    #DomainUserssubcontainer {
+      float: right;
+      width: 48%;
+      height: 250px;
+      overflow-x: auto;
+      overflow-y: auto;
+    }
+
+    #pwdplysubcontainer {
+      float: left;
+      width: 48%;
+      height: 200px;
+      overflow-x: auto;
+      overflow-y: auto;
+    }
+
+    #delegationsubcontainer {
+      float: left;
+      width: 48%;
+      height: 120px;
+      overflow-x: auto;
+      overflow-y: auto;
+    }
+
+    #gpppwdsubcontainer {
+      float: right;
+      width: 48%;
+      height: 120px;
+      overflow-x: auto;
+      overflow-y: auto;
+    }
+
+    #TLBkbsubcontainer {
+      float: right;
+      width: 48%;
+      height: 200px;
+      overflow-x: auto;
+      overflow-y: auto;
+    }
+
+    #krbtgtcontainer {
+      width: 100%;
+      overflow-y: auto;
+      overflow-x: auto;
+      height: 100px;
+
+    }
+
+    #groupsubcontainer {
+      float: left;
+      width: 48%;
+      height: 200px;
+      overflow-x: auto;
+      overflow-y: auto;
+    }
+
+    .error {
+      text-color: #FE5959;
+      text-align: left;
+    }
+
+    #titleblock {
+      display: block;
+      float: center;
+      margin-left: 25%;
+      margin-right: 25%;
+      width: 100%;
+      position: relative;
+      text-align: center background-image:
+    }
+
+    #header img {
+      float: left;
+      width: 190px;
+      height: 130px;
+      /*background-color: #fff;*/
+    }
+
+    .title_class {
+      color: #3B1400;
+      text-shadow: 0 0 1px #F42121, 0 0 1px #0A8504, 0 0 2px white;
+      font-size: 58px;
+      text-align: center;
+    }
+
+    .passed {
+      background-color: #6CCB19;
+      text-align: left;
+      color: #000000;
+    }
+
+    .failed {
+      background-color: #FA6E59;
+      text-align: left;
+      color: #000000;
+      text-decoration: none;
+    }
+
+    #headingbutton {
+      display: inline-block;
+      padding-top: 8px;
+      padding-bottom: 8px;
+      background-color: #D9D7D7;
+      font-size: 16px font-family: 'Trebuchet MS', Arial, Helvetica, sans-serif;
+      font-weight: bold;
+      color: #000;
+
+      width: 12%;
+      text-align: center;
+
+      -webkit-box-shadow: 0px 1px 1px 1px #979696;
+      -moz-box-shadow: 0px 1px 1px 1px #979696;
+      box-shadow: 0px 1px 1px 1px #979696;
+    }
+
+    #headingtabsection {
+      width: 96%;
+      margin-right: 50px;
+      margin-left: 55px;
+      margin-bottom: 30px;
+      margin-bottom: 50px;
+    }
+
+    #headingbutton:active {
+      background-color: #7C2020;
+    }
+
+    #headingbutton:hover {
+      background-color: #7C2020;
+      color: #ffffff;
+    }
+
+    #headingbutton:hover {
+      background-color: #ffffff;
+      color: #000000;
+    }
+
+    #headingbutton a {
+      color: #000000;
+      font-size: 16px;
+      text-decoration: none;
+
+    }
+
+    #header {
+      width: 100% padding: 10px;
+      text-align: center;
+      color: #3B1400;
+      color: white;
+      text-shadow: 8px 8px 12px #000000;
+      font-size: 50px;
+      background-color: #616060;
+    }
+
+    #headerdate {
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 5px;
+      text-align: right;
+    }
+
+    /* Tooltip container */
+    .tooltip {
+      position: relative;
+      display: inline-block;
+      border-bottom: 1px dotted black;
+      /* If you want dots under the hoverable text */
+    }
+
+    /* Tooltip text */
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 180px;
+      background-color: black;
+      color: #fff;
+      text-align: center;
+      padding: 5px 0;
+      border-radius: 6px;
+
+      /* Position the tooltip text - see examples below! */
+      position: absolute;
+      z-index: 1;
+    }
+
+    /* Show the tooltip text when you mouse over the tooltip container */
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      right: 105%;
+    }
+  </style>
+</head>
+
+<body>
+  <div id=header>
+    AD Security Check Report
+  </div>
+  <div id=headerdate>
+    $DisplayDate
+  </div>
