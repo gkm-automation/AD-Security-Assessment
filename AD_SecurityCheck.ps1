@@ -43,20 +43,20 @@ function Write-Log {
     $ini = @{}
     switch -regex -file $FilePath
     {
-        ì^\[(.+)\]î # Section
+        ‚Äú^\[(.+)\]‚Äù # Section
         {
             $section = $matches[1]
             $ini[$section] = @{}
             $CommentCount = 0
         }
-        ì^(;.*)$î # Comment
+        ‚Äú^(;.*)$‚Äù # Comment
         {
             $value = $matches[1]
             $CommentCount = $CommentCount + 1
-            $name = ìCommentî + $CommentCount
+            $name = ‚ÄúComment‚Äù + $CommentCount
             $ini[$section][$name] = $value
         }
-        ì(.+?)\s*=(.*)î # Key
+        ‚Äú(.+?)\s*=(.*)‚Äù # Key
         {
             $name,$value = $matches[1..2]
             $ini[$section][$name] = $value
@@ -548,7 +548,7 @@ $dataRow += "<tr>
 </tr>"
 $dataRow += "<tr>
 <td class=bold_class>DomainMode(DFL)</td>
-<td >$($domaininfo.DomainMode)</td>
+<td >$($domaininfo.RIDMaster)</td>
 </tr>"
 $dataRow += "<tr>
 <td class=bold_class>SchemaMaster</td>
@@ -752,8 +752,8 @@ $domainController = [System.DirectoryServices.ActiveDirectory.DomainController]:
 ForEach($partition in $partitions)
 {
    $domainControllerMetadata = $domainController.GetReplicationMetadata($partition)
-   $dsaSignature = $domainControllerMetadata.Item(ìdsaSignatureî)
-   Write-Log ì$partition was backed up $($dsaSignature.LastOriginatingChangeTime.DateTime)"
+   $dsaSignature = $domainControllerMetadata.Item(‚ÄúdsaSignature‚Äù)
+   Write-Log ‚Äú$partition was backed up $($dsaSignature.LastOriginatingChangeTime.DateTime)"
     $tsbkprow += "<tr>
     <td class=bold_class>Last backup of '$partition'</td>
     <td width='30%' style= 'text-align: center'>$($dsaSignature.LastOriginatingChangeTime.ToShortDateString())</td>
