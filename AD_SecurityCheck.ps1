@@ -971,33 +971,63 @@ Add-Content $HealthReport "</table></div>"
 #---------------------------------------------------------------------------------------------------------------------------------------------
 # Sending Mail
 #---------------------------------------------------------------------------------------------------------------------------------------------
-
+# Send ADHealthCheck Report
 if($SendEmail -eq 'Yes' ) {
 
-    # Send ADHealthCheck Report
-    if(Test-Path $HealthReport)
-    {
-        try {
-            $body = "Please find AD Health Check report attached."
-           Send-MailMessage -Priority High -Attachments $HealthReport -To $emailTo -From $emailFrom -SmtpServer $smtpServer -Body $Body -Subject $emailSubject -Credential $Credentials -UseSsl $smtpServer -Port $smtpPort -ErrorAction Stop
-        } catch {
-            Write-Log 'Error in sending AD Health Check Report'
-        }
-    }
+	# Create new MailMessage Object
+	[System.Net.Mail.MailMessage]$Message = [System.Net.Mail.MailMessage]::new();
 
+	# Compose the message
+	$Message.To.Add($emailTo)
+	$Message.Subject = $emailSubject
 
-    #Send an ERROR mail if Report is not found
-    if(!(Test-Path $HealthReport))
-    {
+	# Try to attach the report
+	if(Test-Path $HealthReport){
+		try{
+			$AttachmentObject = New-Object Net.Mail.Attachment($HealthReport)
+			$Message.Attachments.Add($AttachmentObject)
+			$Message.Body = "Please find AD Health Check report attached."
+		}catch{
+			Write-Log 'Error in sending AD Health Check Report'
+		}
+	}else{
+		$Message.Body = "ERROR: NO AD Health Check report."
+	}
 
-        try {
-            $body = "ERROR: NO AD Health Check report"
-            Send-MailMessage -Priority High -To $emailTo -From $emailFrom -SmtpServer $smtpServer -Body $Body -Subject $emailSubject -Credential $Credentials -UseSsl $smtpServer -Port $smtpPort -ErrorAction Stop
-        } catch {
-            Write-Log 'Unable to send Error mail.'
-        }
-    }
+	# Add sender information to the message
+	[System.Net.Mail.MailAddress]$Sender = [System.Net.Mail.MailAddress]::new($emailFrom);
+	$Message.From = $Sender;
 
+	# Send the message
+	[Net.Mail.SmtpClient]$Smtp = [Net.Mail.SmtpClient]::new()
+
+	# If UseSSL is set to Yes in the ini file, then set the SMTP client to use SSL
+	$Smtp.EnableSsl = $smtpSSL;
+
+	# Configure the SMTP server and port
+	$Smtp.Port = $smtpPort
+	$Smtp.Host = $smtpServer
+
+	# Create credentials
+	$Smtp.Credentials = $Credentials;
+
+	# Send the email
+	try{
+		$Smtp.Send($Message);
+	}catch{
+		Write-Log 'Unable to send Error mail.'
+	}
+
+	# Cleanup the attachment object
+	try{
+		$AttachmentObject.Dispose();
+	}catch [System.Management.Automation.RuntimeException] {
+		if ($null -eq $Attachments) {
+			Write-Warning -Message "No attachment object passed. Unable to dispose of null object."
+		}else{
+			Write-Warning -Message "Unable to dispose of attachment object."
+		}
+	}
 }
 else
 {
