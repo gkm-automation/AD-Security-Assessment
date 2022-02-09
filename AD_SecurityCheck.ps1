@@ -591,16 +591,16 @@ $PasswordStaleDate = $(Get-Date) - $(New-TimeSpan -days $params.Config.UserPassw
 $ADLimitedProperties = @("Name","Enabled","SAMAccountname","DisplayName","Enabled","LastLogonDate","PasswordLastSet","PasswordNeverExpires","PasswordNotRequired","PasswordExpired","SmartcardLogonRequired","AccountExpirationDate","AdminCount","Created","Modified","LastBadPasswordAttempt","badpwdcount","mail","CanonicalName","DistinguishedName","ServicePrincipalName","SIDHistory","PrimaryGroupID","UserAccountControl")
 
 [array]$DomainUsers = Get-ADUser -Filter * -Property $ADLimitedProperties -Server $DCtoConnect 
-[array]$DomainEnabledUsers = $DomainUsers | Where {$_.Enabled -eq $True }
-[array]$DomainDisabledUsers = $DomainUsers | Where {$_.Enabled -eq $false }
-[array]$DomainEnabledInactiveUsers = $DomainEnabledUsers | Where { ($_.LastLogonDate -le $LastLoggedOnDate) -AND ($_.PasswordLastSet -le $PasswordStaleDate) }
+[array]$DomainEnabledUsers = $DomainUsers | Where-Object {$_.Enabled -eq $True }
+[array]$DomainDisabledUsers = $DomainUsers | Where-Object {$_.Enabled -eq $false }
+[array]$DomainEnabledInactiveUsers = $DomainEnabledUsers | Where-Object { ($_.LastLogonDate -le $LastLoggedOnDate) -AND ($_.PasswordLastSet -le $PasswordStaleDate) }
 
-[array]$DomainUsersWithReversibleEncryptionPasswordArray = $DomainUsers | Where { $_.UserAccountControl -band 0x0080 } 
-[array]$DomainUserPasswordNotRequiredArray = $DomainUsers | Where {$_.PasswordNotRequired -eq $True}
-[array]$DomainUserPasswordNeverExpiresArray = $DomainUsers | Where {$_.PasswordNeverExpires -eq $True}
-[array]$DomainKerberosDESUsersArray = $DomainUsers | Where { $_.UserAccountControl -band 0x200000 }
-[array]$DomainUserDoesNotRequirePreAuthArray = $DomainUsers | Where {$_.DoesNotRequirePreAuth -eq $True}
-[array]$DomainUsersWithSIDHistoryArray = $DomainUsers | Where {$_.SIDHistory -like "*"}
+[array]$DomainUsersWithReversibleEncryptionPasswordArray = $DomainUsers | Where-Object { $_.UserAccountControl -band 0x0080 }
+[array]$DomainUserPasswordNotRequiredArray = $DomainUsers | Where-Object {$_.PasswordNotRequired -eq $True}
+[array]$DomainUserPasswordNeverExpiresArray = $DomainUsers | Where-Object {$_.PasswordNeverExpires -eq $True}
+[array]$DomainKerberosDESUsersArray = $DomainUsers | Where-Object { $_.UserAccountControl -band 0x200000 }
+[array]$DomainUserDoesNotRequirePreAuthArray = $DomainUsers | Where-Object {$_.DoesNotRequirePreAuth -eq $True}
+[array]$DomainUsersWithSIDHistoryArray = $DomainUsers | Where-Object {$_.SIDHistory -like "*"}
 
 $domainusersrow = "<thead><tbody><tr>
 <td class=bold_class>Total Users</td>
@@ -792,12 +792,12 @@ ForEach ($KerberosDelegationObjectItem in $KerberosDelegationObjects)
      [array]$KerberosDelegationArray += $KerberosDelegationObjectItem
  }
 
-$Requiredpros = $KerberosDelegationArray | Select Name,ObjectClass
-$Groupedresult = $Requiredpros |  Group ObjectClass -AsHashTable
+$Requiredpros = $KerberosDelegationArray | Select-Object Name,ObjectClass
+$Groupedresult = $Requiredpros |  Group-Object ObjectClass -AsHashTable
 
 $Groupedresult.Keys | ForEach-Object {
     $objs = ""
-    $($Groupedresult.$PSItem.Name) | foreach { $objs = $objs + $_ + "<br>" }
+    $($Groupedresult.$PSItem.Name) | ForEach-Object { $objs = $objs + $_ + "<br>" }
     $krbtgtdelrow += "<tr>
     <td class=bold_class>$($PSItem)</td>
     <td class=failed style= 'text-align: center'><a href='javascript:void(0)' onclick=""Powershellparamater('"+ $objs +"')"">$($Groupedresult.$PSItem.Name.count)</a></td>
@@ -823,7 +823,7 @@ $DomainSYSVOLShareScan = "\\$domainname\SYSVOL\$domainname\Policies\"
 [int]$Count = 0
 $Passfoundfiles = ""
 $flag = "passed"
-Get-ChildItem $DomainSYSVOLShareScan -Filter *.xml -Recurse |  % {
+Get-ChildItem $DomainSYSVOLShareScan -Filter *.xml -Recurse |  ForEach-Object {
 If(Select-String -Path $_.FullName -Pattern "Cpassword"){ $Passfoundfiles += $_.FullName + "</br>" ; $Count += 1; $flag= "failed" }
 }
     $gpppwdrow += "<tr>
@@ -859,7 +859,7 @@ else { $flag = "passed" }
 
 $SelectedPros = @("DistinguishedName","Enabled","msds-keyversionnumber","PasswordLastSet","Created")
 
-$SelectedPros | % {
+$SelectedPros | ForEach-Object {
 
 $krbtgtrow += "
     <td class=$flag style= 'text-align: center'>$($DomainKRBTGTAccount.$PSItem)</td>" 
@@ -899,9 +899,9 @@ $ADPrivGroupArray = @(
 foreach($group in $ADPrivGroupArray){
     try
     {
-    $GrpProps = Get-ADGroupMember -Identity $group -Recursive -Server $DCtoConnect -ErrorAction SilentlyContinue | select SamAccountName,distinguishedName
+    $GrpProps = Get-ADGroupMember -Identity $group -Recursive -Server $DCtoConnect -ErrorAction SilentlyContinue | Select-Object SamAccountName,distinguishedName
     $tempobj = ""
-        $GrpProps | % {
+        $GrpProps | ForEach-Object {
             $tempobj = $tempobj + $_.SamAccountName +"(" + $_.distinguishedName + ")" + "</br>"
         }
         $grouprow += "<tr>
