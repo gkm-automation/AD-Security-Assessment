@@ -43,20 +43,20 @@ function Write-Log {
     $ini = @{}
     switch -regex -file $FilePath
     {
-        “^\[(.+)\]” # Section
+        "^\[(.+)\]" # Section
         {
             $section = $matches[1]
             $ini[$section] = @{}
             $CommentCount = 0
         }
-        “^(;.*)$” # Comment
+        "^(;.*)$" # Comment
         {
             $value = $matches[1]
             $CommentCount = $CommentCount + 1
-            $name = “Comment” + $CommentCount
+            $name = "Comment" + $CommentCount
             $ini[$section][$name] = $value
         }
-        “(.+?)\s*=(.*)” # Key
+        "(.+?)\s*=(.*)" # Key
         {
             $name,$value = $matches[1..2]
             $ini[$section][$name] = $value
@@ -752,8 +752,8 @@ $domainController = [System.DirectoryServices.ActiveDirectory.DomainController]:
 ForEach($partition in $partitions)
 {
    $domainControllerMetadata = $domainController.GetReplicationMetadata($partition)
-   $dsaSignature = $domainControllerMetadata.Item(“dsaSignature”)
-   Write-Log “$partition was backed up $($dsaSignature.LastOriginatingChangeTime.DateTime)"
+   $dsaSignature = $domainControllerMetadata.Item("dsaSignature")
+   Write-Log "$partition was backed up $($dsaSignature.LastOriginatingChangeTime.DateTime)"
     $tsbkprow += "<tr>
     <td class=bold_class>Last backup of '$partition'</td>
     <td width='30%' style= 'text-align: center'>$($dsaSignature.LastOriginatingChangeTime.ToShortDateString())</td>
