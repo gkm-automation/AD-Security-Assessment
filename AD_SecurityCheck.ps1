@@ -99,7 +99,7 @@ $DCList = @()
 
 [DateTime]$DisplayDate = ((get-date).ToUniversalTime())
 
-$header = "
+$header = @'
       <!DOCTYPE html>
 		<html>
 		<head>
@@ -480,7 +480,8 @@ $header = "
             $DisplayDate
         </div>
    
-   "
+'@
+
 Add-Content $HealthReport $header
 
 
