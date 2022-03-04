@@ -1,7 +1,5 @@
-
 # First Clear any variables
 Remove-Variable * -ErrorAction SilentlyContinue
-
 
 # Start script execution time calculation
 $ScrptStartTime = (Get-Date).ToString('dd-MM-yyyy hh:mm:ss')
@@ -15,7 +13,7 @@ $Dir = $(Split-Path $Scriptpath);
 $runntime= (get-date -format dd_MM_yyyy-HH_mm_ss)-as [string]
 $HealthReport = "$dir\Reports" + "$runntime" + ".htm"
 
-# Logfile 
+# Logfile
 $Logfile = "$dir\Log" + "$runntime" + ".log"
 
 #---------------------------------------------------------------------------------------------------------------------------------------------
@@ -27,7 +25,7 @@ function Write-Log {
         [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string]$Message,
- 
+
         [Parameter()]
         [ValidateNotNullOrEmpty()]
         [ValidateSet('Information','Warning','Error')]
@@ -43,20 +41,20 @@ function Write-Log {
     $ini = @{}
     switch -regex -file $FilePath
     {
-        “^\[(.+)\]” # Section
+        "^\[(.+)\]" # Section
         {
             $section = $matches[1]
             $ini[$section] = @{}
             $CommentCount = 0
         }
-        “^(;.*)$” # Comment
+        "^(;.*)$" # Comment
         {
             $value = $matches[1]
             $CommentCount = $CommentCount + 1
-            $name = “Comment” + $CommentCount
+            $name = "Comment" + $CommentCount
             $ini[$section][$name] = $value
         }
-        “(.+?)\s*=(.*)” # Key
+        "(.+?)\s*=(.*)" # Key
         {
             $name,$value = $matches[1..2]
             $ini[$section][$name] = $value
@@ -68,7 +66,7 @@ function Write-Log {
 #import AD Module
 
 try {
- Import-Module ActiveDirectory   
+ Import-Module ActiveDirectory
 }
 catch [System.Management.Automation.ParameterBindingException] {
      Write-Log -Message "Failed Importing Active Directory Module..!" -Severity Error
@@ -85,7 +83,16 @@ $emailFrom     = $params.SMTPSettings.EmailFrom.Trim()
 $emailTo       = $params.SMTPSettings.EmailTo.Trim()
 $smtpServer    = $params.SMTPSettings.SmtpServer.Trim()
 $emailSubject  = $params.SMTPSettings.EmailSubject.Trim()
+$smtpPort 	   = $params.SMTPSettings.SmtpPort.Trim()
 
+# Determine if email transmission should use SSL
+[Bool]$smtpSSL
+if ($params.SMTPSettings.UseSSL.Trim() -eq "Yes") {
+	$smtpSSL = $true
+}
+else {
+	$smtpSSL = $false
+}
 
 $DCtoConnect = $params.Config.ConnectorDC.Trim()
 [string]$date = Get-Date
@@ -99,13 +106,13 @@ $DCList = @()
 
 [DateTime]$DisplayDate = ((get-date).ToUniversalTime())
 
-$header = "
-      <!DOCTYPE html>
+$header = @'
+<!DOCTYPE html>
 		<html>
 		<head>
         <link rel='shortcut icon' href='favicon.png' type='image/x-icon'>
         <meta charset='utf-8'>
-		<meta name='viewport' content='width=device-width, initial-scale=1.0'>		
+		<meta name='viewport' content='width=device-width, initial-scale=1.0'>
 		<title>AD Security Check</title>
 		<script type=""text/javascript"">
 		  function Powershellparamater(htmlTable)
@@ -133,7 +140,7 @@ $header = "
 		</script>
 		<style>
         <style>
-		    #toolbar  
+		    #toolbar
             {
 				position: fixed;
 				width: 100%;
@@ -144,7 +151,7 @@ $header = "
 				text-align: right;
 				display: none;
 			}
-			#backToTop  
+			#backToTop
             {
 				font-family: Segoe UI;
 				font-weight: bold;
@@ -153,13 +160,13 @@ $header = "
 				background-color: #ffffff;
 			}
 
-			#Reportrer  
+			#Reportrer
             {
 				width: 95%;
 				margin: 0 auto;
 			}
 
-			body 
+			body
             {
 				color: #333333;
 				font-family: Calibri,Tahoma;
@@ -167,16 +174,16 @@ $header = "
 				background-color: #616060;
 			}
 
-			.odd  
+			.odd
             {
 				background-color: #ffffff;
 			}
 
-			.even  
+			.even
             {
 				background-color: #dddddd;
 			}
-			
+
 			table
 			{
 				background-color: #616060;
@@ -186,7 +193,7 @@ $header = "
 				border: 1px groove #000000;
 				border-collapse: collapse;
 			}
-			
+
 			caption
 			{
 				background-color: #D9D7D7;
@@ -200,41 +207,41 @@ $header = "
 				font-weight: 550;
 			}
 
-            td  
+            td
             {
 				text-align: left;
 				font-size: 14px;
 				color: #000000;
 				background-color: #F5F5F5;
 				border: 1px groove #000000;
-				
+
 				-webkit-box-shadow: 0px 10px 10px -10px #979696;
 				-moz-box-shadow: 0px 10px 10px -10px #979696;
 				box-shadow: 0px 2px 2px 2px #979696;
             }
-			
+
 			td a
 			{
 				text-decoration: none;
 				color:blue;
 				word-wrap: Break-word;
 			}
-			
-			th 
+
+			th
 			{
 				background-color: #7D7D7D;
 				text-align: center;
 				font-size: 14px;
 				border: 1px groove #000000;
 				word-wrap: Break-word;
-				
+
 				-webkit-box-shadow: 0px 10px 10px -10px #979696;
 				-moz-box-shadow: 0px 10px 10px -10px #979696;
 				box-shadow: 0px 2px 2px 2px #979696;
 			}
-			
-			
-			
+
+
+
 			#container
 			{
 				width: 98%;
@@ -243,7 +250,7 @@ $header = "
 				overflow-x:auto;
 				margin-bottom: 20px;
 			}
-            
+
             #scriptexecutioncontainer
             {
 				width: 80%;
@@ -252,7 +259,7 @@ $header = "
 				margin-bottom: 30px;
 				margin: auto;
 			}
-            
+
             #discovercontainer
             {
 				width: 80%;
@@ -311,13 +318,13 @@ $header = "
 				overflow-x:auto;
 				overflow-y:auto;
 			}
-			
+
 			#krbtgtcontainer{
 				width: 100%;
 				overflow-y: auto;
 				overflow-x:auto;
 				height: 100px;
-				
+
 			}
             #groupsubcontainer
 			{
@@ -327,7 +334,7 @@ $header = "
 				overflow-x:auto;
 				overflow-y:auto;
 			}
-			.error  
+			.error
 			{
 				text-color: #FE5959;
 				text-align: left;
@@ -344,7 +351,7 @@ $header = "
 				text-align: center
 				background-image:
 			}
-			
+
 			#header img {
 			  float: left;
 			  width: 190px;
@@ -352,7 +359,7 @@ $header = "
 			  /*background-color: #fff;*/
 			}
 
-			.title_class 
+			.title_class
 			{
 				color: #3B1400;
 				text-shadow: 0 0 1px #F42121, 0 0 1px #0A8504, 0 0 2px white;
@@ -382,15 +389,15 @@ $header = "
 				font-family: 'Trebuchet MS', Arial, Helvetica, sans-serif;
 				font-weight: bold;
 				color: #000;
-				
+
 				width: 12%;
 				text-align: center;
-				
+
 				-webkit-box-shadow: 0px 1px 1px 1px #979696;
 				-moz-box-shadow: 0px 1px 1px 1px #979696;
 				box-shadow: 0px 1px 1px 1px #979696;
 			}
-			
+
 			#headingtabsection
 			{
 				width: 96%;
@@ -399,7 +406,7 @@ $header = "
 				margin-bottom: 30px;
 				margin-bottom: 50px;
 			}
-			
+
 			#headingbutton:active
 			{
 				background-color: #7C2020;
@@ -410,7 +417,7 @@ $header = "
 				background-color: #7C2020;
 				color: #ffffff;
 			}
-			
+
 			#headingbutton:hover
 			{
 				background-color: #ffffff;
@@ -421,9 +428,9 @@ $header = "
 				color: #000000;
 				font-size: 16px;
 				text-decoration: none;
-				
+
 			}
-			 
+
 			#header
 			{
 				width: 100%
@@ -441,7 +448,7 @@ $header = "
 				font-size:16px;
 				font-weight: bold;
 				margin-bottom: 5px;
-                text-align: right;	
+                text-align: right;
 			}
 			/* Tooltip container */
 			.tooltip {
@@ -459,7 +466,7 @@ $header = "
 			  text-align: center;
 			  padding: 5px 0;
 			  border-radius: 6px;
-			 
+
 			  /* Position the tooltip text - see examples below! */
 			  position: absolute;
 			  z-index: 1;
@@ -468,37 +475,36 @@ $header = "
 			/* Show the tooltip text when you mouse over the tooltip container */
 			.tooltip:hover .tooltiptext {
 			  visibility: visible;
-			  right: 105%; 
+			  right: 105%;
 			}
 		</style>
 	</head>
 	<body>
 	    <div id=header>
             AD Security Check Report
-        </div> 
+        </div>
         	    <div id=headerdate>
             $DisplayDate
         </div>
-   
-   "
+
+'@
+
 Add-Content $HealthReport $header
-
-
 
 #---------------------------------------------------------------------------------------------------------------------------
 # Domain INfo
 #---------------------------------------------------------------------------------------------------------------------------
 
-try 
-{ 
-      $Domain = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()  
-} 
-catch 
-{ 
+try
+{
+      $Domain = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+}
+catch
+{
       Write-Log "Cannot connect to current Domain."
       Break;
-} 
- 
+}
+
 $Domain.DomainControllers | ForEach-Object {
 $DCList += $_.Name
 }
@@ -509,11 +515,11 @@ if(!$DCList)
    Break;
 }
 
-                                   
+
 Write-Log "List of Domain Controllers Discovered"
 
 # List out all machines discovered in Log File and Console
-foreach ($D in $DCList) 
+foreach ($D in $DCList)
 {
 Write-Log "$D"
 }
@@ -585,21 +591,21 @@ $DomainUsers= "<Div id=DomainUserssubcontainer><table border=1px>
 Add-Content $HealthReport $DomainUsers
 
 ## Get Domain User Information
-$LastLoggedOnDate = $(Get-Date) - $(New-TimeSpan -days $params.Config.UserLogonAge)  
+$LastLoggedOnDate = $(Get-Date) - $(New-TimeSpan -days $params.Config.UserLogonAge)
 $PasswordStaleDate = $(Get-Date) - $(New-TimeSpan -days $params.Config.UserPasswordAge)
 $ADLimitedProperties = @("Name","Enabled","SAMAccountname","DisplayName","Enabled","LastLogonDate","PasswordLastSet","PasswordNeverExpires","PasswordNotRequired","PasswordExpired","SmartcardLogonRequired","AccountExpirationDate","AdminCount","Created","Modified","LastBadPasswordAttempt","badpwdcount","mail","CanonicalName","DistinguishedName","ServicePrincipalName","SIDHistory","PrimaryGroupID","UserAccountControl")
 
-[array]$DomainUsers = Get-ADUser -Filter * -Property $ADLimitedProperties -Server $DCtoConnect 
-[array]$DomainEnabledUsers = $DomainUsers | Where {$_.Enabled -eq $True }
-[array]$DomainDisabledUsers = $DomainUsers | Where {$_.Enabled -eq $false }
-[array]$DomainEnabledInactiveUsers = $DomainEnabledUsers | Where { ($_.LastLogonDate -le $LastLoggedOnDate) -AND ($_.PasswordLastSet -le $PasswordStaleDate) }
+[array]$DomainUsers = Get-ADUser -Filter * -Property $ADLimitedProperties -Server $DCtoConnect
+[array]$DomainEnabledUsers = $DomainUsers | Where-Object {$_.Enabled -eq $True }
+[array]$DomainDisabledUsers = $DomainUsers | Where-Object {$_.Enabled -eq $false }
+[array]$DomainEnabledInactiveUsers = $DomainEnabledUsers | Where-Object { ($_.LastLogonDate -le $LastLoggedOnDate) -AND ($_.PasswordLastSet -le $PasswordStaleDate) }
 
-[array]$DomainUsersWithReversibleEncryptionPasswordArray = $DomainUsers | Where { $_.UserAccountControl -band 0x0080 } 
-[array]$DomainUserPasswordNotRequiredArray = $DomainUsers | Where {$_.PasswordNotRequired -eq $True}
-[array]$DomainUserPasswordNeverExpiresArray = $DomainUsers | Where {$_.PasswordNeverExpires -eq $True}
-[array]$DomainKerberosDESUsersArray = $DomainUsers | Where { $_.UserAccountControl -band 0x200000 }
-[array]$DomainUserDoesNotRequirePreAuthArray = $DomainUsers | Where {$_.DoesNotRequirePreAuth -eq $True}
-[array]$DomainUsersWithSIDHistoryArray = $DomainUsers | Where {$_.SIDHistory -like "*"}
+[array]$DomainUsersWithReversibleEncryptionPasswordArray = $DomainUsers | Where-Object { $_.UserAccountControl -band 0x0080 }
+[array]$DomainUserPasswordNotRequiredArray = $DomainUsers | Where-Object {$_.PasswordNotRequired -eq $True}
+[array]$DomainUserPasswordNeverExpiresArray = $DomainUsers | Where-Object {$_.PasswordNeverExpires -eq $True}
+[array]$DomainKerberosDESUsersArray = $DomainUsers | Where-Object { $_.UserAccountControl -band 0x200000 }
+[array]$DomainUserDoesNotRequirePreAuthArray = $DomainUsers | Where-Object {$_.DoesNotRequirePreAuth -eq $True}
+[array]$DomainUsersWithSIDHistoryArray = $DomainUsers | Where-Object {$_.SIDHistory -like "*"}
 
 $domainusersrow = "<thead><tbody><tr>
 <td class=bold_class>Total Users</td>
@@ -632,13 +638,13 @@ If($($DomainUsersWithReversibleEncryptionPasswordArray.Count) -gt 0){
     $domainusersrow += "<tr>
     <td class=bold_class>Users With ReversibleEncryptionPasswordArray</td>
     <td class=failed width='40%' style= 'text-align: center'><a href='javascript:void(0)' onclick=""Powershellparamater('"+ $temp +"')"">$($DomainUsersWithReversibleEncryptionPasswordArray.Count)</a></td>
-    </tr>" 
+    </tr>"
 }
 else{
     $domainusersrow += "<tr>
     <td class=bold_class>Users With ReversibleEncryptionPasswordArray</td>
     <td class=passed width='40%' style= 'text-align: center'>$($DomainUsersWithReversibleEncryptionPasswordArray.Count)</td>
-    </tr>" 
+    </tr>"
 }
 If($($DomainUserPasswordNotRequiredArray.Count) -gt 0){
     $temp = @()
@@ -646,13 +652,13 @@ If($($DomainUserPasswordNotRequiredArray.Count) -gt 0){
     $domainusersrow += "<tr>
     <td class=bold_class>Users With Password Not Required</td>
     <td class=failed width='40%' style= 'text-align: center'><a href='javascript:void(0)' onclick=""Powershellparamater('"+ $temp +"')"">$($DomainUserPasswordNotRequiredArray.Count)</a></td>
-    </tr>" 
+    </tr>"
 }
 else{
     $domainusersrow += "<tr>
     <td class=bold_class>Users With Password Not Required</td>
     <td class=passed width='40%' style= 'text-align: center'>$($DomainUserPasswordNotRequiredArray.Count)</td>
-    </tr>" 
+    </tr>"
 }
 
 If($($DomainKerberosDESUsersArray.Count) -gt 0){
@@ -661,13 +667,13 @@ If($($DomainKerberosDESUsersArray.Count) -gt 0){
     $domainusersrow += "<tr>
     <td class=bold_class>Users With Kerberos DES</td>
     <td class=failed width='40%' style= 'text-align: center'><a href='javascript:void(0)' onclick=""Powershellparamater('"+ $temp +"')"">$($DomainKerberosDESUsersArray.Count)</a></td>
-    </tr>" 
+    </tr>"
 }
 else{
     $domainusersrow += "<tr>
     <td class=bold_class>Users With Kerberos DES</td>
     <td class=passed width='40%' style= 'text-align: center'>$($DomainKerberosDESUsersArray.Count)</td>
-    </tr>" 
+    </tr>"
 }
 
 If($($DomainUserDoesNotRequirePreAuthArray.Count) -gt 0){
@@ -676,20 +682,20 @@ If($($DomainUserDoesNotRequirePreAuthArray.Count) -gt 0){
     $domainusersrow += "<tr>
     <td class=bold_class>Users That Do Not Require Kerberos Pre-Authentication</td>
     <td class=failed width='40%' style= 'text-align: center'><a href='javascript:void(0)' onclick=""Powershellparamater('"+ $temp +"')"">$($DomainUserDoesNotRequirePreAuthArray.Count)</a></td>
-    </tr>" 
+    </tr>"
 }
 else{
     $domainusersrow += "<tr>
     <td class=bold_class>Users That Do Not Require Kerberos Pre-Authentication</td>
     <td class=passed width='40%' style= 'text-align: center'>$($DomainUserDoesNotRequirePreAuthArray.Count)</td>
-    </tr>" 
+    </tr>"
 }
 
 Add-Content $HealthReport $domainusersrow
 
 Add-Content $HealthReport "</tbody></table></div></div>" # End Sub Container Div and Container Div
 #-----------------------
-# Domain Password Policy 
+# Domain Password Policy
 #-----------------------
 Write-Log -Message "Determining Domain Password Policy........... "
 #Start Container and Sub Container Div
@@ -736,7 +742,7 @@ Add-Content $HealthReport $tsbkp
 $ADRootDSE = get-adrootdse  -Server $DCtoConnect
 $ADConfigurationNamingContext = $ADRootDSE.configurationNamingContext
 $TombstoneObjectInfo = Get-ADObject -Identity "CN=Directory Service,CN=Windows NT,CN=Services,$ADConfigurationNamingContext" `
--Partition "$ADConfigurationNamingContext" -Properties * 
+-Partition "$ADConfigurationNamingContext" -Properties *
 [int]$TombstoneLifetime = $TombstoneObjectInfo.tombstoneLifetime
 IF ($TombstoneLifetime -eq 0) { $TombstoneLifetime = 60 }
 
@@ -752,8 +758,8 @@ $domainController = [System.DirectoryServices.ActiveDirectory.DomainController]:
 ForEach($partition in $partitions)
 {
    $domainControllerMetadata = $domainController.GetReplicationMetadata($partition)
-   $dsaSignature = $domainControllerMetadata.Item(“dsaSignature”)
-   Write-Log “$partition was backed up $($dsaSignature.LastOriginatingChangeTime.DateTime)"
+   $dsaSignature = $domainControllerMetadata.Item("dsaSignature")
+   Write-Log "$partition was backed up $($dsaSignature.LastOriginatingChangeTime.DateTime)"
     $tsbkprow += "<tr>
     <td class=bold_class>Last backup of '$partition'</td>
     <td width='30%' style= 'text-align: center'>$($dsaSignature.LastOriginatingChangeTime.ToShortDateString())</td>
@@ -785,18 +791,18 @@ ForEach ($KerberosDelegationObjectItem in $KerberosDelegationObjects)
  {
     IF ($KerberosDelegationObjectItem.UserAccountControl -BAND 0x0080000)
      { $KerberosDelegationServices = 'All Services' ; $KerberosType = 'Unconstrained' }
-    ELSE 
-     { $KerberosDelegationServices = 'Specific Services' ; $KerberosType = 'Constrained' } 
+    ELSE
+     { $KerberosDelegationServices = 'Specific Services' ; $KerberosType = 'Constrained' }
      $KerberosDelegationObjectItem | Add-Member -MemberType NoteProperty -Name KerberosDelegationServices -Value $KerberosDelegationServices -Force
      [array]$KerberosDelegationArray += $KerberosDelegationObjectItem
  }
 
-$Requiredpros = $KerberosDelegationArray | Select Name,ObjectClass
-$Groupedresult = $Requiredpros |  Group ObjectClass -AsHashTable
+$Requiredpros = $KerberosDelegationArray | Select-Object Name,ObjectClass
+$Groupedresult = $Requiredpros |  Group-Object ObjectClass -AsHashTable
 
 $Groupedresult.Keys | ForEach-Object {
     $objs = ""
-    $($Groupedresult.$PSItem.Name) | foreach { $objs = $objs + $_ + "<br>" }
+    $($Groupedresult.$PSItem.Name) | ForEach-Object { $objs = $objs + $_ + "<br>" }
     $krbtgtdelrow += "<tr>
     <td class=bold_class>$($PSItem)</td>
     <td class=failed style= 'text-align: center'><a href='javascript:void(0)' onclick=""Powershellparamater('"+ $objs +"')"">$($Groupedresult.$PSItem.Name.count)</a></td>
@@ -805,7 +811,7 @@ $Groupedresult.Keys | ForEach-Object {
 
 Add-Content $HealthReport $krbtgtdelrow
 
-Add-Content $HealthReport "</table></Div>" # End Sub Container 
+Add-Content $HealthReport "</table></Div>" # End Sub Container
 
 #---------------------------------------------------------------------------------------------------------------------------------------------
 # Scan SYSVOL for Group Policy Preference Passwords
@@ -822,7 +828,7 @@ $DomainSYSVOLShareScan = "\\$domainname\SYSVOL\$domainname\Policies\"
 [int]$Count = 0
 $Passfoundfiles = ""
 $flag = "passed"
-Get-ChildItem $DomainSYSVOLShareScan -Filter *.xml -Recurse |  % {
+Get-ChildItem $DomainSYSVOLShareScan -Filter *.xml -Recurse |  ForEach-Object {
 If(Select-String -Path $_.FullName -Pattern "Cpassword"){ $Passfoundfiles += $_.FullName + "</br>" ; $Count += 1; $flag= "failed" }
 }
     $gpppwdrow += "<tr>
@@ -858,10 +864,10 @@ else { $flag = "passed" }
 
 $SelectedPros = @("DistinguishedName","Enabled","msds-keyversionnumber","PasswordLastSet","Created")
 
-$SelectedPros | % {
+$SelectedPros | ForEach-Object {
 
 $krbtgtrow += "
-    <td class=$flag style= 'text-align: center'>$($DomainKRBTGTAccount.$PSItem)</td>" 
+    <td class=$flag style= 'text-align: center'>$($DomainKRBTGTAccount.$PSItem)</td>"
  }
 
  Add-Content $HealthReport $krbtgtrow
@@ -898,19 +904,19 @@ $ADPrivGroupArray = @(
 foreach($group in $ADPrivGroupArray){
     try
     {
-    $GrpProps = Get-ADGroupMember -Identity $group -Recursive -Server $DCtoConnect -ErrorAction SilentlyContinue | select SamAccountName,distinguishedName
+    $GrpProps = Get-ADGroupMember -Identity $group -Recursive -Server $DCtoConnect -ErrorAction SilentlyContinue | Select-Object SamAccountName,distinguishedName
     $tempobj = ""
-        $GrpProps | % {
+        $GrpProps | ForEach-Object {
             $tempobj = $tempobj + $_.SamAccountName +"(" + $_.distinguishedName + ")" + "</br>"
         }
         $grouprow += "<tr>
-        <td class=bold_class>$group</td>   
+        <td class=bold_class>$group</td>
         <td style= 'text-align: center'><a href='javascript:void(0)' onclick=""Powershellparamater('"+ $tempobj +"')"">$($GrpProps.SamAccountName.count)</a></td>
         </tr>"
     }
     catch{
         $grouprow += "<tr>
-        <td class=bold_class>$group</td>   
+        <td class=bold_class>$group</td>
         <td style= 'text-align: center'>NA</td>
         </tr>"
     }
@@ -954,7 +960,7 @@ $Elapsed = "<tr>
                <td>$Seconds</td>
                <td>$Milliseconds</td>
                <td>$myhost</td>
-               
+
             </tr>
          "
 $ScriptExecutionRow += $Elapsed
@@ -965,35 +971,63 @@ Add-Content $HealthReport "</table></div>"
 #---------------------------------------------------------------------------------------------------------------------------------------------
 # Sending Mail
 #---------------------------------------------------------------------------------------------------------------------------------------------
-
+# Send ADHealthCheck Report
 if($SendEmail -eq 'Yes' ) {
 
-    # Send ADHealthCheck Report
-    if(Test-Path $HealthReport) 
-    {
-        try {
-            $body = "Please find AD Health Check report attached."
-            #$port = "25"
-           Send-MailMessage -Priority High -Attachments $HealthReport -To $emailTo -From $emailFrom -SmtpServer $smtpServer -Body $Body -Subject $emailSubject -Credential $Credentials -UseSsl -Port 587 -ErrorAction Stop
-        } catch {       
-            Write-Log 'Error in sending AD Health Check Report'
-        }
-    }
+	# Create new MailMessage Object
+	[System.Net.Mail.MailMessage]$Message = [System.Net.Mail.MailMessage]::new();
 
-    
-    #Send an ERROR mail if Report is not found 
-    if(!(Test-Path $HealthReport)) 
-    {
+	# Compose the message
+	$Message.To.Add($emailTo)
+	$Message.Subject = $emailSubject
 
-        try {
-            $body = "ERROR: NO AD Health Check report"
-            $port = "25"
-            Send-MailMessage -Priority High -To $emailTo -From $emailFrom -SmtpServer $smtpServer -Body $Body -Subject $emailSubject -Port $port -ErrorAction Stop
-        } catch {
-            Write-Log 'Unable to send Error mail.'
-        }
-    }
+	# Try to attach the report
+	if(Test-Path $HealthReport){
+		try{
+			$AttachmentObject = New-Object Net.Mail.Attachment($HealthReport)
+			$Message.Attachments.Add($AttachmentObject)
+			$Message.Body = "Please find AD Health Check report attached."
+		}catch{
+			Write-Log 'Error in sending AD Health Check Report'
+		}
+	}else{
+		$Message.Body = "ERROR: NO AD Health Check report."
+	}
 
+	# Add sender information to the message
+	[System.Net.Mail.MailAddress]$Sender = [System.Net.Mail.MailAddress]::new($emailFrom);
+	$Message.From = $Sender;
+
+	# Send the message
+	[Net.Mail.SmtpClient]$Smtp = [Net.Mail.SmtpClient]::new()
+
+	# If UseSSL is set to Yes in the ini file, then set the SMTP client to use SSL
+	$Smtp.EnableSsl = $smtpSSL;
+
+	# Configure the SMTP server and port
+	$Smtp.Port = $smtpPort
+	$Smtp.Host = $smtpServer
+
+	# Create credentials
+	$Smtp.Credentials = $Credentials;
+
+	# Send the email
+	try{
+		$Smtp.Send($Message);
+	}catch{
+		Write-Log 'Unable to send Error mail.'
+	}
+
+	# Cleanup the attachment object
+	try{
+		$AttachmentObject.Dispose();
+	}catch [System.Management.Automation.RuntimeException] {
+		if ($null -eq $Attachments) {
+			Write-Warning -Message "No attachment object passed. Unable to dispose of null object."
+		}else{
+			Write-Warning -Message "Unable to dispose of attachment object."
+		}
+	}
 }
 else
 {
